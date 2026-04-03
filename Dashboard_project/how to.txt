@@ -1,0 +1,12 @@
+cd D:\Dashboard_project
+
+Kemudian install Flask (jika belum):
+pip install flask
+
+python app.py
+
+ * Running on http://127.0.0.1:5000/
+
+Lalu buka browser dan akses:
+
+http://127.0.0.1:5000/

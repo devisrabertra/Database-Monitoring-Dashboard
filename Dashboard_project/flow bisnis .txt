@@ -1,0 +1,20 @@
+D:\DASHBOARD_PROJECT\
+│   app.py
+│   advanced_ir.py
+│   requirements.txt
+│   
+├───History_Backup.py
+│       
+├───restore_db
+│       restore_DB_DistributionInventory.py
+│       restore_DB_InventoriBarang.py
+│       restore_DB_LogisticsInventory.py
+│       restore_DB_StockManagement.py
+│       restore_DB_Warehouse.py
+│       run.py
+│
+├───static
+│       style.css
+│
+└───templates
+        index.html

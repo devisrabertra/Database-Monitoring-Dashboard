@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Flatpickr CSS untuk date picker yang lebih baik -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --sidebar-width:     270px;
+            --sidebar-collapsed: 68px;
+
+            /* GREEN PALETTE — vivid & bright */
+            --g1:  #00C853;
+            --g2:  #00E676;
+            --g3:  #69F0AE;
+            --g4:  #1B5E20;
+            --g5:  #2E7D32;
+            --g6:  #388E3C;
+            --g7:  #43A047;
+            --g8:  #A5D6A7;
+            --g9:  #E8F5E9;
+            --g10: #F1FBF1;
+
+            --gold:      #FFD600;
+            --gold-dark: #F9A825;
+            --gold-pale: #FFFDE7;
+            --coral:     #FF6D00;
+            --coral-lt:  #FFF3E0;
+            --text-dark:  #1B2E1C;
+            --text-mid:   #3A5C3B;
+            --text-muted: #6A9B6C;
+            --border:     #C8E6C9;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(140deg, #E8F5E9 0%, #F1FBF1 55%, #E0F7FA 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .app-container { display:flex; min-height:100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(175deg, #1B5E20 0%, #2E7D32 40%, #388E3C 75%, #1A6B3A 100%);
+            color: #fff;
+            height: 100vh;
+            position: fixed; top:0; left:0;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            transition: width 0.35s cubic-bezier(.4,0,.2,1);
+            box-shadow: 5px 0 28px rgba(27,94,32,0.38);
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+        .sidebar-toggle {
+            position: absolute; top:20px; right:-13px;
+            width:26px; height:26px; border-radius:50%;
+            background: var(--g1);
+            border: 2px solid #fff; color:#fff;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; z-index:20; font-size:0.65rem;
+            box-shadow: 0 0 14px rgba(0,200,83,0.55);
+            transition: transform 0.35s;
+        }
+        .sidebar.collapsed .sidebar-toggle { transform: rotate(180deg); }
+
+        .sidebar-header {
+            padding: 26px 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            display:flex; align-items:center; gap:12px; flex-shrink:0;
+        }
+        .sidebar-logo {
+            width:38px; height:38px; border-radius:10px;
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.05rem; color:var(--g4); flex-shrink:0;
+            box-shadow: 0 0 14px rgba(0,230,118,0.6);
+        }
+        .sidebar-title {
+            font-family:'Nunito',sans-serif; font-size:1.1rem; font-weight:900;
+            white-space:nowrap; opacity:1; transition:opacity 0.25s;
+        }
+        .sidebar.collapsed .sidebar-title { opacity:0; pointer-events:none; }
+
+        .server-badge {
+            margin:16px 12px; padding:11px 13px;
+            background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.13); border-radius:10px;
+            display:flex; align-items:center; gap:10px; overflow:hidden; flex-shrink:0;
+        }
+        .server-dot {
+            width:9px; height:9px; border-radius:50%; background:var(--g2); flex-shrink:0;
+            box-shadow:0 0 8px var(--g2);
+            animation: pulse-g 2s ease-in-out infinite;
+        }
+        @keyframes pulse-g {
+            0%,100%{ box-shadow:0 0 5px var(--g2); opacity:1; }
+            50%    { box-shadow:0 0 16px var(--g2),0 0 26px var(--g3); opacity:.8; }
+        }
+        .server-text { font-size:0.76rem; opacity:.85; white-space:nowrap; overflow:hidden; transition:opacity 0.25s; }
+        .sidebar.collapsed .server-text { opacity:0; }
+
+        .nav-section { flex:1; overflow-y:auto; padding:8px 0; }
+        .nav-label {
+            padding:10px 20px 5px; font-size:0.65rem; text-transform:uppercase;
+            letter-spacing:1.8px; opacity:.4; white-space:nowrap; overflow:hidden;
+            transition:opacity 0.25s; font-weight:700;
+        }
+        .sidebar.collapsed .nav-label { opacity:0; }
+
+        .sidebar-nav { list-style:none; }
+        .sidebar-nav li { margin-bottom:2px; }
+
+        .nav-button {
+            display:flex; align-items:center; gap:13px; padding:13px 20px;
+            color:rgba(255,255,255,.78); background:none; border:none;
+            width:100%; text-align:left; cursor:pointer;
+            font-family:'Poppins',sans-serif; font-size:0.875rem; font-weight:500;
+            transition:all 0.22s; position:relative; white-space:nowrap; overflow:hidden;
+        }
+        .nav-button i { font-size:1rem; flex-shrink:0; width:20px; text-align:center; }
+        .nav-button span { transition:opacity 0.25s; }
+        .sidebar.collapsed .nav-button span { opacity:0; }
+        .nav-button::before {
+            content:''; position:absolute; left:0; top:6px; bottom:6px; width:3px;
+            background:linear-gradient(180deg,var(--g2),var(--g3));
+            border-radius:0 3px 3px 0; opacity:0; transition:opacity 0.2s;
+        }
+        .nav-button:hover { color:#fff; background:rgba(0,230,118,.12); }
+        .nav-button:hover::before { opacity:1; }
+        .nav-button:hover i { color:var(--g2); }
+
+        .main-content {
+            flex:1; margin-left:var(--sidebar-width); min-height:100vh;
+            background:transparent;
+            transition:margin-left 0.35s cubic-bezier(.4,0,.2,1);
+            display:flex; flex-direction:column;
+        }
+        .main-content.expanded { margin-left:var(--sidebar-collapsed); }
+
+        .content-header {
+            background:rgba(255,255,255,0.93); backdrop-filter:blur(14px);
+            padding:18px 30px;
+            border-bottom:2px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center;
+            box-shadow:0 3px 20px rgba(27,94,32,0.1);
+            position:sticky; top:0; z-index:100;
+        }
+        .header-eyebrow {
+            font-size:0.67rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:2px; color:var(--g1); margin-bottom:2px;
+        }
+        .content-header h1 {
+            font-family:'Nunito',sans-serif; font-size:1.6rem; font-weight:900; color:var(--text-dark);
+        }
+        .content-header h1 span { color:var(--g1); }
+
+        .user-chip {
+            display:flex; align-items:center; gap:11px;
+            background:linear-gradient(135deg,var(--g9),#fff);
+            border:1.5px solid var(--border); border-radius:40px; padding:7px 18px 7px 7px;
+            box-shadow:0 2px 12px rgba(0,200,83,0.13);
+        }
+        .user-avatar {
+            width:36px; height:36px; border-radius:50%;
+            background:linear-gradient(135deg,var(--g5),var(--g1));
+            display:flex; align-items:center; justify-content:center;
+            color:#fff; font-size:0.9rem; box-shadow:0 0 10px rgba(0,200,83,0.4);
+        }
+        .uname { font-weight:700; font-size:0.84rem; color:var(--text-dark); }
+        .urole { font-size:0.7rem; color:var(--text-muted); }
+
+        .dashboard-cards {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+            gap:20px; padding:26px 30px;
+        }
+        .dashboard-card {
+            background:#fff; border:1.5px solid var(--border);
+            border-radius:20px; padding:26px;
+            position:relative; overflow:hidden;
+            transition:transform 0.25s,box-shadow 0.25s;
+            box-shadow:0 3px 14px rgba(27,94,32,0.07);
+        }
+        .dashboard-card::before {
+            content:''; position:absolute; top:0; left:0; bottom:0; width:5px; border-radius:20px 0 0 20px;
+        }
+        .dashboard-card:nth-child(1)::before { background:linear-gradient(180deg,var(--g1),var(--g7)); }
+        .dashboard-card:nth-child(2)::before { background:linear-gradient(180deg,var(--gold),var(--gold-dark)); }
+        .dashboard-card:nth-child(3)::before { background:linear-gradient(180deg,var(--g2),var(--g3)); }
+        .dashboard-card::after {
+            content:''; position:absolute; top:-30px; right:-30px;
+            width:110px; height:110px; border-radius:50%; opacity:.07;
+        }
+        .dashboard-card:nth-child(1)::after { background:var(--g1); }
+        .dashboard-card:nth-child(2)::after { background:var(--gold); }
+        .dashboard-card:nth-child(3)::after { background:var(--g2); }
+
+        .dashboard-card:hover { transform:translateY(-6px); box-shadow:0 16px 42px rgba(27,94,32,0.15); }
+
+        .card-icon-wrap {
+            width:50px; height:50px; border-radius:14px;
+            display:flex; align-items:center; justify-content:center;
+            margin-bottom:16px; font-size:1.35rem;
+        }
+        .dashboard-card:nth-child(1) .card-icon-wrap { background:linear-gradient(135deg,#E8F5E9,#C8E6C9); color:var(--g5); }
+        .dashboard-card:nth-child(2) .card-icon-wrap { background:linear-gradient(135deg,#FFFDE7,#FFF9C4); color:var(--gold-dark); }
+        .dashboard-card:nth-child(3) .card-icon-wrap { background:linear-gradient(135deg,#F1FBF1,#DCEDC8); color:var(--g6); }
+
+        .dashboard-card h3 { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:8px; }
+        .card-value { font-family:'Nunito',sans-serif; font-size:2.6rem; font-weight:900; color:var(--text-dark); line-height:1; }
+        .card-sub { font-size:.76rem; color:var(--text-muted); margin-top:7px; }
+
+        .content-section {
+            background:rgba(255,255,255,0.95);
+            border:1.5px solid var(--border); border-radius:20px;
+            padding:26px; margin:0 30px 26px;
+            box-shadow:0 3px 18px rgba(27,94,32,0.07);
+        }
+        .section-header {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:22px; padding-bottom:16px;
+            border-bottom:2px solid var(--g9);
+        }
+        .section-header h2 { font-family:'Nunito',sans-serif; font-size:1.2rem; font-weight:800; color:var(--text-dark); }
+
+        .database-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:14px; }
+        .database-item {
+            background:linear-gradient(145deg,var(--g9),#fff);
+            border:1.5px solid var(--border); border-radius:14px;
+            padding:20px 14px; text-align:center; transition:all 0.22s;
+        }
+        .database-item:hover {
+            background:linear-gradient(145deg,#C8E6C9,var(--g9));
+            border-color:var(--g7); transform:translateY(-4px);
+            box-shadow:0 8px 24px rgba(27,94,32,0.14);
+        }
+        .database-item i { font-size:1.7rem; color:var(--g5); margin-bottom:10px; display:block; }
+        .database-item:hover i { color:var(--g1); }
+        .database-item h5 { font-size:.8rem; font-weight:700; color:var(--text-dark); word-break:break-all; }
+
+        .filter-form {
+            background:linear-gradient(135deg,var(--g9),#fff);
+            border:1.5px solid var(--border); border-radius:14px;
+            padding:22px; margin-bottom:22px;
+        }
+        .filter-row { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:16px; align-items:end; }
+        @media(max-width:900px){ .filter-row{ grid-template-columns:1fr 1fr; } }
+        @media(max-width:600px){ .filter-row{ grid-template-columns:1fr; } }
+
+        .form-label { font-weight:700; font-size:.8rem; color:var(--g5); margin-bottom:6px; display:block; }
+        .form-select, .form-control {
+            border:1.5px solid var(--border); border-radius:10px; padding:10px 13px;
+            font-size:.875rem; background:#fff; color:var(--text-dark);
+            font-family:'Poppins',sans-serif; transition:border-color .2s,box-shadow .2s;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color:var(--g1); box-shadow:0 0 0 3px rgba(0,200,83,.15); outline:none;
+        }
+
+        /* Style untuk date picker */
+        .flatpickr-calendar {
+            font-family: 'Poppins', sans-serif;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+        }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+            background: var(--g1);
+            border-color: var(--g1);
+        }
+        .flatpickr-day.today {
+            border-color: var(--g5);
+        }
+        .flatpickr-day:hover {
+            background: var(--g9);
+        }
+
+        .data-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.84rem; }
+        .data-table th {
+            background:linear-gradient(135deg,var(--g4),var(--g5));
+            color:var(--g3); padding:14px 16px; text-align:left;
+            font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.6px;
+        }
+        .data-table th:first-child { border-radius:12px 0 0 0; }
+        .data-table th:last-child  { border-radius:0 12px 0 0; }
+        .data-table td { padding:13px 16px; border-bottom:1px solid var(--border); background:#fff; color:var(--text-dark); }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table tr:hover td { background:var(--g9); }
+        .fw-bold-table { font-weight:700; color:var(--g5); }
+
+        .status-badge {
+            display:inline-flex; align-items:center; gap:5px; padding:4px 12px;
+            border-radius:20px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+        }
+        .status-active { background:linear-gradient(135deg,#E8F5E9,#C8E6C9); color:var(--g5); border:1.5px solid #A5D6A7; }
+        .status-warning { background:linear-gradient(135deg,var(--gold-pale),#FFF9C4); color:#E65100; border:1.5px solid #FFE082; }
+        .status-info { background:linear-gradient(135deg,#F1FBF1,#DCEDC8); color:var(--g6); border:1.5px solid #C5E1A5; }
+
+        .btn-custom {
+            border-radius:10px; padding:10px 22px; font-weight:700;
+            font-family:'Poppins',sans-serif; font-size:.875rem; border:none;
+            display:inline-flex; align-items:center; gap:8px;
+            cursor:pointer; transition:all .22s; letter-spacing:.2px;
+        }
+        .btn-custom:hover { transform:translateY(-2px); }
+        .btn-primary-custom {
+            background:linear-gradient(135deg,var(--g5),var(--g1)); color:#fff;
+            box-shadow:0 4px 16px rgba(0,200,83,.35);
+        }
+        .btn-primary-custom:hover { box-shadow:0 6px 22px rgba(0,200,83,.5); }
+        .btn-success-custom {
+            background:linear-gradient(135deg,var(--g1),var(--g2)); color:var(--g4);
+            box-shadow:0 4px 16px rgba(0,230,118,.35);
+        }
+        .btn-success-custom:hover { box-shadow:0 6px 22px rgba(0,230,118,.5); }
+        .btn-warning-custom {
+            background:linear-gradient(135deg,var(--gold-dark),var(--gold)); color:var(--text-dark);
+            box-shadow:0 4px 16px rgba(249,168,37,.35);
+        }
+        .btn-warning-custom:hover { box-shadow:0 6px 22px rgba(249,168,37,.5); }
+
+        .alert-custom { border-radius:12px; padding:16px 20px; margin-bottom:20px; border-left:4px solid; font-size:.875rem; font-weight:500; }
+        .alert-info    { background:var(--g9);       border-left-color:var(--g1);      color:var(--g5); }
+        .alert-warning { background:var(--gold-pale); border-left-color:var(--gold-dark); color:#7B3F00; }
+        .alert-danger  { background:#FFF3F3;           border-left-color:#E53935;        color:#B71C1C; }
+        .alert-success { background:#E8F5E9;           border-left-color:var(--g1);      color:var(--g5); }
+
+        .output-box {
+            background:var(--g4); color:var(--g3); border-radius:12px; padding:18px;
+            font-family:'Courier New',monospace; font-size:.8rem; max-height:280px; overflow-y:auto; margin-top:12px;
+        }
+
+        .loading-overlay {
+            position:fixed; inset:0; background:rgba(27,94,32,.88);
+            display:flex; justify-content:center; align-items:center;
+            z-index:9999; flex-direction:column; color:var(--g3); backdrop-filter:blur(8px);
+        }
+        .spinner-large {
+            width:62px; height:62px; border:4px solid rgba(105,240,174,.2); border-radius:50%;
+            border-top-color:var(--g2); animation:spin .85s linear infinite; margin-bottom:22px;
+            box-shadow:0 0 20px rgba(0,230,118,.4);
+        }
+        @keyframes spin { to{ transform:rotate(360deg); } }
+
+        .main-footer {
+            margin-top:auto;
+            background:linear-gradient(135deg,var(--g4) 0%,var(--g5) 50%,var(--g6) 100%);
+            color:rgba(255,255,255,.88); padding:22px 30px;
+            display:flex; justify-content:space-between; align-items:center;
+            flex-wrap:wrap; gap:16px;
+            box-shadow:0 -4px 20px rgba(27,94,32,.2);
+        }
+        .footer-brand { display:flex; align-items:center; gap:12px; }
+        .footer-icon {
+            width:38px; height:38px; border-radius:10px;
+            background:linear-gradient(135deg,var(--g1),var(--g2));
+            display:flex; align-items:center; justify-content:center;
+            font-size:1rem; color:var(--g4);
+            box-shadow:0 0 12px rgba(0,230,118,.45);
+        }
+        .footer-brand-text h4 { font-family:'Nunito',sans-serif; font-size:1rem; font-weight:900; margin:0; color:var(--g2); }
+        .footer-brand-text p  { font-size:.7rem; opacity:.6; margin:1px 0 0; }
+
+        .footer-dba {
+            display:flex; align-items:center; gap:12px;
+            background:rgba(0,230,118,.12);
+            border:1.5px solid rgba(0,230,118,.3); border-radius:30px; padding:10px 22px;
+            box-shadow:0 0 14px rgba(0,230,118,.18);
+        }
+        .footer-dba i { color:var(--g2); font-size:1.1rem; }
+        .footer-dba-text h5 { font-family:'Nunito',sans-serif; font-weight:900; font-size:.92rem; margin:0; color:var(--g2); }
+        .footer-dba-text p  { font-size:.65rem; opacity:.6; margin:1px 0 0; text-transform:uppercase; letter-spacing:.5px; }
+
+        .footer-copy { font-size:.7rem; opacity:.5; text-align:right; line-height:1.6; }
+
+        .badge-pill {
+            background:linear-gradient(135deg,var(--g9),#C8E6C9); color:var(--g5);
+            border:1px solid var(--border); border-radius:20px; padding:4px 14px;
+            font-size:.77rem; font-weight:700;
+        }
+
+        pre {
+            font-family: 'Courier New', monospace;
+            background: var(--g9);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .btn-custom:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @media(max-width:768px){
+            .sidebar{ width:var(--sidebar-collapsed); }
+            .sidebar .sidebar-title,.sidebar .server-text,
+            .sidebar .nav-label,.sidebar .nav-button span{ opacity:0; pointer-events:none; }
+            .main-content{ margin-left:var(--sidebar-collapsed); }
+            .dashboard-cards{ padding:16px; }
+            .content-section{ margin:0 16px 20px; padding:18px; }
+            .content-header{ padding:14px 16px; }
+            .main-footer{ padding:18px 16px; flex-direction:column; text-align:center; }
+            .footer-copy{ text-align:center; }
+        }
+
+        ::-webkit-scrollbar{ width:6px; }
+        ::-webkit-scrollbar-track{ background:var(--g9); }
+        ::-webkit-scrollbar-thumb{ background:linear-gradient(180deg,var(--g1),var(--g7)); border-radius:3px; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo"><i class="fas fa-database"></i></div>
+            <div class="sidebar-title">DB Manager</div>
+        </div>
+        <div class="server-badge">
+            <div class="server-dot"></div>
+            <div class="server-text">
+                <div style="font-weight:700;font-size:.79rem;">{{ data.server_status[0].server }}</div>
+                <div style="font-size:.68rem;opacity:.65;">Online · Operational</div>
+            </div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Main Menu</div>
+            <ul class="sidebar-nav">
+                <li>
+                    <button class="nav-button" onclick="window.location.href='/'">
+                        <i class="fas fa-home"></i><span>Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <form method="POST" action="/get_databases" class="d-inline w-100">
+                        <button type="submit" class="nav-button"><i class="fas fa-database"></i><span>Database List</span></button>
+                    </form>
+                </li>
+                <li>
+                    <form method="POST" action="/history_backup" class="d-inline w-100">
+                        <button type="submit" class="nav-button"><i class="fas fa-history"></i><span>Backup History</span></button>
+                    </form>
+                </li>
+                <li>
+                    <form method="POST" action="/validasi_bak" class="d-inline w-100">
+                        <button type="submit" class="nav-button"><i class="fas fa-check-circle"></i><span>Validate Backup</span></button>
+                    </form>
+                </li>
+                <li>
+                    <form method="POST" action="/backup_database_page" class="d-inline w-100">
+                        <button type="submit" class="nav-button"><i class="fas fa-archive"></i><span>Backup Database</span></button>
+                    </form>
+                </li>
+                <li>
+                    <form method="POST" action="/restore_database" class="d-inline w-100">
+                        <button type="submit" class="nav-button"><i class="fas fa-redo"></i><span>Restore Database</span></button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+
+        <!-- HEADER -->
+        <div class="content-header">
+            <div>
+                <div class="header-eyebrow"><i class="fa fa-television"></i> System Control Panel</div>
+                <h1>Database <span>Monitoring</span> Dashboard</h1>
+            </div>
+            <div class="user-chip">
+                <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+                <div>
+                    <div class="uname">Administrator</div>
+                    <div class="urole">System Admin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARDS -->
+        <div class="dashboard-cards">
+            <div class="dashboard-card">
+                <div class="card-icon-wrap"><i class="fas fa-database"></i></div>
+                <h3>Total Databases</h3>
+                <div class="card-value">{{ data.databases|length if data.databases else data.backup_summary.total_databases if data.backup_summary else '0' }}</div>
+                <div class="card-sub"><i class="fas fa-circle" style="font-size:.45rem;color:var(--g1);vertical-align:middle;"></i> Active on server</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-icon-wrap"><i class="fas fa-archive"></i></div>
+                <h3>Total Backups</h3>
+                <div class="card-value">{{ data.backup_summary.total_backups if data.backup_summary else '0' }}</div>
+                <div class="card-sub"><i class="fas fa-calendar-alt" style="color:var(--gold-dark);font-size:.75rem;"></i> Last 33 days</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-icon-wrap"><i class="fas fa-server"></i></div>
+                <h3>Server Status</h3>
+                <div style="margin-top:10px;">
+                    <span class="status-badge status-active">
+                        <i class="fas fa-circle" style="font-size:.45rem;"></i>Operational
+                    </span>
+                </div>
+                <div class="card-sub" style="margin-top:10px;">All systems running normally</div>
+            </div>
+        </div>
+
+        <!-- DATABASE LIST -->
+        {% if data.show_databases and data.databases %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list me-2" style="color:var(--g1);"></i>Database List</h2>
+                <span class="badge-pill">{{ data.databases|length }} databases</span>
+            </div>
+            <div class="database-grid">
+                {% for db in data.databases %}
+                <div class="database-item"><i class="fas fa-database"></i><h5>{{ db }}</h5></div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- BACKUP HISTORY -->
+        {% if data.show_history %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history me-2" style="color:var(--g1);"></i>Backup History</h2>
+            </div>
+            <div class="filter-form">
+                <form method="POST" action="/proses_history_backup">
+                    <div class="filter-row">
+                        <div>
+                            <label class="form-label">Database Name</label>
+                            <select class="form-select" name="databaseSelect">
+                                <option value="all" {% if data.selected_database == 'all' %}selected{% endif %}>— All Databases —</option>
+                                {% for db in data.backup_databases %}
+                                <option value="{{ db }}" {% if data.selected_database == db %}selected{% endif %}>{{ db }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Backup Type</label>
+                            <select class="form-select" name="backupTypeSelect">
+                                <option value="all"         {% if data.selected_backup_type == 'all' %}selected{% endif %}>— All Types —</option>
+                                <option value="database"    {% if data.selected_backup_type == 'database' %}selected{% endif %}>Database (Full)</option>
+                                <option value="incremental" {% if data.selected_backup_type == 'incremental' %}selected{% endif %}>Incremental</option>
+                                <option value="log"         {% if data.selected_backup_type == 'log' %}selected{% endif %}>Log</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Limit Records</label>
+                            <select class="form-select" name="limit">
+                                <option value="5">5</option><option value="10">10</option>
+                                <option value="100" selected>100</option><option value="1000">1000</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn-custom btn-primary-custom" style="height:44px;">
+                                <i class="fas fa-search"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="days_back" value="33">
+                </form>
+            </div>
+            {% if data.backup_history and data.backup_history.success %}
+                {% if data.backup_history.data %}
+                <div class="alert-custom alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Showing <strong>{{ data.backup_history.count }}</strong> backup records.
+                    {% if data.backup_history.limit_reached %} — Showing first {{ data.backup_history.limit }}. Use filters to narrow.{% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Server</th><th>Database Name</th><th>Backup Type</th>
+                                <th>Start Date</th><th>Finish Date</th><th>Expiration</th>
+                                <th>Size</th><th>Logical Device</th><th>Physical Device</th>
+                                <th>Backup Set</th><th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for backup in data.backup_history.data %}
+                            <tr><td>{{ backup.Server if backup.Server else '-' }}</td>
+                                <td class="fw-bold-table">{{ backup.database_name }}</td>
+                                <td><span class="status-badge {% if backup.backup_type == 'Database' %}status-active{% elif backup.backup_type == 'Incremental' %}status-warning{% else %}status-info{% endif %}">{{ backup.backup_type }}</span></td>
+                                <td style="font-size:.79rem;">{{ backup.backup_start_date if backup.backup_start_date else '-' }}</td>
+                                <td style="font-size:.79rem;">{{ backup.backup_finish_date if backup.backup_finish_date else '-' }}</td>
+                                <td style="font-size:.79rem;">{{ backup.expiration_date if backup.expiration_date else '-' }}</td>
+                                <td>{% if backup.backup_size %}{{ "%.2f"|format(backup.backup_size/1024/1024) }} MB{% else %}N/A{% endif %}</td>
+                                <td style="font-size:.79rem;">{{ backup.logical_device_name if backup.logical_device_name else '-' }}</td>
+                                <td style="font-size:.79rem;">{{ backup.physical_device_name if backup.physical_device_name else '-' }}</td>
+                                <td style="font-size:.79rem;">{{ backup.backupset_name if backup.backupset_name else '-' }}</td>
+                                <td style="font-size:.79rem;">{{ backup.description if backup.description else '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert-custom alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>No backup history found.</div>
+                {% endif %}
+            {% elif data.backup_history and not data.backup_history.success %}
+            <div class="alert-custom alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error: {{ data.backup_history.error }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- BACKUP DATABASE BOX DENGAN DATE PICKER -->
+        {% if data.show_backup_box %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-archive me-2" style="color:var(--g1);"></i>Backup Database</h2>
+            </div>
+            
+            {% if data.error_message %}
+            <div class="alert-custom alert-danger mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ data.error_message }}
+            </div>
+            {% endif %}
+            
+            {% if data.backup_result %}
+            <div class="alert-custom {% if data.backup_result.success %}alert-success{% else %}alert-danger{% endif %} mb-4">
+                <strong><i class="fas {% if data.backup_result.success %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                {% if data.backup_result.success %}Backup Berhasil{% else %}Backup Gagal{% endif %}</strong><br>
+                <strong>Database:</strong> {{ data.backup_result.database_name }}<br>
+                <strong>Tipe Backup:</strong> {{ data.backup_result.backup_type }}<br>
+                <strong>Tanggal:</strong> {{ data.backup_result.custom_date }}<br>
+                <strong>Status:</strong> {{ data.backup_result.message }}
+                {% if data.backup_result.file_size %}
+                <br><strong>Ukuran File:</strong> {{ data.backup_result.file_size }}
+                {% endif %}
+                {% if data.backup_result.backup_file %}
+                <br><strong>Lokasi File:</strong> <code style="font-size: 0.75rem;">{{ data.backup_result.backup_file }}</code>
+                {% endif %}
+                {% if data.backup_result.error %}
+                <br><strong>Error Detail:</strong> {{ data.backup_result.error }}
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Informasi Folder Backup -->
+            <div class="alert-custom {% if data.folder_exists and data.folder_writable %}alert-info{% else %}alert-warning{% endif %} mb-4">
+                <i class="fas fa-folder-open me-2"></i>
+                <strong>Folder Backup:</strong> {{ data.backup_folder }}<br>
+                <strong>Status:</strong> 
+                {% if data.folder_exists %}
+                    ✅ Folder ditemukan
+                {% else %}
+                    ❌ Folder tidak ditemukan
+                {% endif %}
+                {% if data.folder_writable %}
+                    | ✅ Dapat ditulis
+                {% else %}
+                    | ❌ Tidak dapat ditulis
+                {% endif %}
+            </div>
+            
+            <div class="alert-custom alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                Pilih database, tipe backup, dan tanggal untuk melakukan backup. File akan disimpan di folder <strong>{{ data.backup_folder }}</strong>
+            </div>
+            
+            <form method="POST" action="/proses_backup" id="backupForm">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-database me-1"></i> Database Name
+                        </label>
+                        <select class="form-select" name="databaseSelect" required>
+                            <option value="">— Pilih Database —</option>
+                            {% for db in data.database_list %}
+                            <option value="{{ db }}" {% if data.selected_database_backup == db %}selected{% endif %}>
+                                {{ db }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-tag me-1"></i> Backup Type
+                        </label>
+                        <select class="form-select" name="backupTypeSelect" required>
+                            <option value="">— Pilih Tipe Backup —</option>
+                            <option value="FULL" {% if data.selected_backup_type_backup == 'FULL' %}selected{% endif %}>
+                                FULL (Full Backup)
+                            </option>
+                            <option value="DIFF" {% if data.selected_backup_type_backup == 'DIFF' %}selected{% endif %}>
+                                DIFF (Differential)
+                            </option>
+                            <option value="LOG" {% if data.selected_backup_type_backup == 'LOG' %}selected{% endif %}>
+                                LOG (Transaction Log)
+                            </option>
+                        </select>
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            FULL: Backup penuh database | DIFF: Perubahan sejak FULL terakhir | LOG: Transaction log
+                        </small>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i> Custom Date
+                        </label>
+                        <input type="date" 
+                               class="form-control" 
+                               name="dateSelect" 
+                               id="datePicker"
+                               value="{{ data.selected_date_backup if data.selected_date_backup else data.current_date }}"
+                               required>
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            Pilih tanggal menggunakan kalender (format: YYYY-MM-DD)
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="mt-4 d-flex gap-3">
+                    <button type="submit" class="btn-custom btn-primary-custom" id="backupButton">
+                        <i class="fas fa-play"></i> Jalankan Backup
+                    </button>
+                    <button type="button" class="btn-custom" style="background:#f0f0f0; color:#555;" onclick="resetBackupForm()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Informasi tambahan tentang format file -->
+            <div class="mt-4 pt-3 border-top">
+                <h6 style="font-size: 0.8rem; color: var(--g5);">
+                    <i class="fas fa-file-archive me-1"></i> Format File Backup
+                </h6>
+               
+</pre>
+                <small class="text-muted">
+                    <i class="fas fa-check-circle me-1" style="color: var(--g1);"></i>
+                    Backup akan disimpan di: <strong>{{ data.backup_folder }}</strong>
+                </small>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- VALIDATION BOX -->
+        {% if data.show_validation_box %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-check-circle me-2" style="color:var(--g1);"></i>Validate Backup Files</h2>
+            </div>
+            <div class="alert-custom alert-info"><i class="fas fa-info-circle me-2"></i>Select a database backup file to validate its contents and metadata.</div>
+            <form method="POST" action="/proses_validasi">
+                <div class="mb-4">
+                    <label class="form-label">Select Database for Validation</label>
+                    <select class="form-select" name="validationSelect" required>
+                        <option value="">— Choose Database —</option>
+                        <option value="1">DB_DistributionInventory</option>
+                        <option value="2">DB_LogisticsInventory</option>
+                        <option value="3">DB_StockManagement</option>
+                        <option value="4">DB_Warehouse</option>
+                        <option value="5">DB_InventoriBarang</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-custom btn-warning-custom"><i class="fas fa-check"></i>Validate Backup</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- RESTORE BOX -->
+        {% if data.show_restore_box %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-redo me-2" style="color:var(--g1);"></i>Restore Database</h2>
+            </div>
+            <div class="alert-custom alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>This will replace the existing database with backup data. Ensure you have taken precautions.</div>
+            <form method="POST" action="/proses_restore" id="restoreForm">
+                <div class="mb-4">
+                    <label class="form-label">Select Database to Restore</label>
+                    <select class="form-select" name="restoreSelect" id="restoreSelect" required>
+                        <option value="">— Choose Database —</option>
+                        <option value="1">DB_DistributionInventory</option>
+                        <option value="2">DB_LogisticsInventory</option>
+                        <option value="3">DB_StockManagement</option>
+                        <option value="4">DB_Warehouse</option>
+                        <option value="5">DB_InventoriBarang</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-custom btn-success-custom" id="restoreButton">
+                    <i class="fas fa-download"></i>Start Restore
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- VALIDATION RESULTS -->
+        {% if data.restore_header %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-table me-2" style="color:var(--g1);"></i>Backup Validation Results</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Server Name</th><th>Database Name</th><th>Creation Date</th></tr></thead>
+                    <tbody>
+                        {% for row in data.restore_header %}
+                        <tr><td>{{ row.ServerName }}</td><td class="fw-bold-table">{{ row.DatabaseName }}</td><td>{{ row.DatabaseCreationDate }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RESTORE RESULTS -->
+        {% if data.restore_result %}
+        <div class="content-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-{% if data.restore_result.success %}check-circle{% else %}exclamation-circle{% endif %} me-2"
+                       style="color:{% if data.restore_result.success %}var(--g1){% else %}#E53935{% endif %};"></i>
+                    Restore Operation Results
+                </h2>
+            </div>
+            <div class="alert-custom {% if data.restore_result.success %}alert-success{% else %}alert-danger{% endif %}">
+                <strong>Database:</strong> {{ data.restore_result.database_name }}<br>
+                <strong>Script:</strong> {{ data.restore_result.script_used }}<br>
+                <strong>Status:</strong> {{ data.restore_result.message }}
+            </div>
+            {% if data.restore_result.output %}
+            <h5 style="margin-bottom:6px;font-size:.88rem;color:var(--g5);font-weight:700;"><i class="fas fa-terminal me-2"></i>Console Output</h5>
+            <div class="output-box">{{ data.restore_result.output }}</div>
+            {% endif %}
+            {% if data.restore_result.error_output %}
+            <h5 style="margin:16px 0 6px;font-size:.88rem;color:#E53935;font-weight:700;"><i class="fas fa-exclamation-triangle me-2"></i>Error Output</h5>
+            <div class="output-box" style="background:#3B0F0F;color:#FF8A80;">{{ data.restore_result.error_output }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if data.error_message and not data.show_backup_box %}
+        <div class="content-section">
+            <div class="alert-custom alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>{{ data.error_message }}</div>
+        </div>
+        {% endif %}
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+            <div class="footer-brand">
+                <div class="footer-icon"><i class="fas fa-database"></i></div>
+                <div class="footer-brand-text">
+                    <h4>DB Manager</h4>
+                    <p>Database Monitoring System</p>
+                </div>
+            </div>
+
+            <div class="footer-dba">
+                <i class="fas fa-user-shield"></i>
+                <div class="footer-dba-text">
+                    <h5>DBA — Database Administrator</h5>
+                    <p>System &bull; Administration &bull; Management</p>
+                </div>
+            </div>
+
+            <div class="footer-copy">
+                &copy; 2025 DB Manager &bull; All rights reserved<br>
+                <span>Powered by System Administration</span>
+            </div>
+        </footer>
+
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="spinner-large"></div>
+    <h3 style="font-family:'Nunito',sans-serif;font-weight:900;margin-bottom:8px;color:var(--g2);">Processing Operation</h3>
+    <p style="opacity:.75;font-size:.88rem;">Please wait, this may take a few moments…</p>
+</div>
+
+<script>
+    const sidebar     = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleBtn   = document.getElementById('sidebarToggle');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    });
+
+    const restoreForm    = document.getElementById('restoreForm');
+    const restoreButton  = document.getElementById('restoreButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const backupForm     = document.getElementById('backupForm');
+    const backupButton   = document.getElementById('backupButton');
+    const datePicker     = document.getElementById('datePicker');
+    const previewDate    = document.getElementById('previewDate');
+
+    // Update preview date when date picker changes
+    if (datePicker && previewDate) {
+        function updatePreviewDate() {
+            const selectedDate = datePicker.value;
+            if (selectedDate) {
+                const dateObj = new Date(selectedDate);
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                previewDate.textContent = `${day}_${month}_${year}`;
+            } else {
+                previewDate.textContent = '-';
+            }
+        }
+        
+        datePicker.addEventListener('change', updatePreviewDate);
+        updatePreviewDate(); // Initial update
+    }
+
+    // Reset backup form function
+    function resetBackupForm() {
+        if (backupForm) {
+            backupForm.reset();
+            const selects = backupForm.querySelectorAll('select');
+            selects.forEach(select => {
+                select.value = '';
+            });
+            if (datePicker) {
+                datePicker.value = '{{ data.current_date }}';
+                updatePreviewDate();
+            }
+        }
+    }
+
+    if (restoreForm) {
+        restoreForm.addEventListener('submit', function () {
+            const sel = document.getElementById('restoreSelect');
+            if (sel && sel.value) {
+                loadingOverlay.style.display = 'flex';
+                if (restoreButton) {
+                    restoreButton.disabled = true;
+                    restoreButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing…';
+                }
+            }
+        });
+    }
+
+    if (backupForm) {
+        backupForm.addEventListener('submit', function () {
+            const dbSelect = document.querySelector('select[name="databaseSelect"]');
+            const typeSelect = document.querySelector('select[name="backupTypeSelect"]');
+            const dateSelect = document.querySelector('input[name="dateSelect"]');
+            
+            if (dbSelect && dbSelect.value && typeSelect && typeSelect.value && dateSelect && dateSelect.value) {
+                loadingOverlay.style.display = 'flex';
+                if (backupButton) {
+                    backupButton.disabled = true;
+                    backupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Backup...';
+                }
+            }
+        });
+    }
+
+    // Auto-hide loading overlay after 10 minutes (600000 ms)
+    setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+        if (restoreButton) {
+            restoreButton.disabled = false;
+            restoreButton.innerHTML = '<i class="fas fa-download"></i> Start Restore';
+        }
+        if (backupButton) {
+            backupButton.disabled = false;
+            backupButton.innerHTML = '<i class="fas fa-play"></i> Jalankan Backup';
+        }
+    }, 600000);
+</script>
+</body>
+</html>

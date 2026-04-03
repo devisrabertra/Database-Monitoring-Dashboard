@@ -1,0 +1,36 @@
+# Database files
+*.mdf
+*.ldf
+*.bak
+*.trn
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Data folders
+DATA/
+DATA BACKUP/
+Jurnal/
+SUBMIT JURNAL/
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Excel files (opsional)
+*.xlsx
+*.xls
